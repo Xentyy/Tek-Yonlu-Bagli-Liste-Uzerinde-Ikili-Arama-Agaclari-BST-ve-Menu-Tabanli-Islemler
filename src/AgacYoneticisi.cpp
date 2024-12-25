@@ -1,3 +1,12 @@
+/*
+* @file..........: AgacYoneticisi.cpp
+* @description...: Bu dosya, AgacYoneticisi sınıfının uygulama detaylarını içerir. İkili arama ağaçları üzerinde ekleme, silme, yükseklik hesaplama, aynalama ve ASCII toplamları gibi işlemler gerçekleştirilir.
+* @course........: 2-A
+* @assignment....: 2. Ödev
+* @date..........: 08.12.2024
+* @author........: Melih Can Şengün melih.sengun@ogr.sakarya.edu.tr
+*/
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,10 +16,12 @@
 #include "AgacYoneticisi.hpp"
 using namespace std;
 
+// İki sayı arasında maksimum değeri döndürür
 int AgacYoneticisi::maks(int a, int b) {
     return (a > b) ? a : b;
 }
 
+// İkili ağaç düğümüne veri ekler.
 IkiliAgacDugumu* AgacYoneticisi::BSTEkle(IkiliAgacDugumu* dugum, char ch) {
     if (!dugum) return new IkiliAgacDugumu(ch);
     if (ch < dugum->veri)
@@ -20,6 +31,7 @@ IkiliAgacDugumu* AgacYoneticisi::BSTEkle(IkiliAgacDugumu* dugum, char ch) {
     return dugum;
 }
 
+// İkili ağacın yüksekliğini hesaplar.
 int AgacYoneticisi::YukseklikAl(IkiliAgacDugumu* dugum) const {
     if (!dugum) return 0;
     int solY = YukseklikAl(dugum->sol);
@@ -27,6 +39,7 @@ int AgacYoneticisi::YukseklikAl(IkiliAgacDugumu* dugum) const {
     return maks(solY, sagY) + 1;
 }
 
+// İkili ağacı siler ve bellekten temizler.
 void AgacYoneticisi::BSTSil(IkiliAgacDugumu* dugum) {
     if (!dugum) return;
     BSTSil(dugum->sol);
@@ -34,6 +47,7 @@ void AgacYoneticisi::BSTSil(IkiliAgacDugumu* dugum) {
     delete dugum;
 }
 
+// ASCII toplamlarını hesaplamak için yardımcı fonksiyon.
 int AgacYoneticisi::DuzenlenmisAsciiToplamYardimci(IkiliAgacDugumu* dugum, bool solCocukMu) {
     if (!dugum) return 0;
     int deger = (int)dugum->veri;
@@ -43,12 +57,15 @@ int AgacYoneticisi::DuzenlenmisAsciiToplamYardimci(IkiliAgacDugumu* dugum, bool 
         + DuzenlenmisAsciiToplamYardimci(dugum->sag, false);
 }
 
+// Kök düğüm üzerinden ASCII toplamını hesaplar.
 int AgacYoneticisi::DuzenlenmisAsciiToplam(IkiliAgacDugumu* kok) {
     return DuzenlenmisAsciiToplamYardimci(kok, false);
 }
 
+// Yapıcı fonksiyon: Sınıfın başlangıç değerlerini atar.
 AgacYoneticisi::AgacYoneticisi() : bas(0), son(0) {}
 
+// Yıkıcı fonksiyon: Bellekteki kaynakları serbest bırakır.
 AgacYoneticisi::~AgacYoneticisi() {
     Dugum* temp = bas;
     while (temp) {
@@ -61,6 +78,7 @@ AgacYoneticisi::~AgacYoneticisi() {
     son = 0;
 }
 
+// Dosyadan veri okuyarak ikili ağaçlar oluşturur.
 void AgacYoneticisi::DosyadanAgacOlustur(const string& dosyaAdi) {
     ifstream dosya(dosyaAdi.c_str());
     if (!dosya.is_open()) {
@@ -70,28 +88,18 @@ void AgacYoneticisi::DosyadanAgacOlustur(const string& dosyaAdi) {
 
     string satir;
     while (getline(dosya, satir)) {
-        // 1) Geçici düğüm (adres henüz "" veriyoruz)
         Dugum* yeniDugum = new Dugum("", 0);
-
-        // 2) Pointer değerinden son 4 basamaklık sayı üretelim
         uintptr_t ptrValue = reinterpret_cast<uintptr_t>(yeniDugum);
         int kisaAdres = static_cast<int>(ptrValue % 10000);
-        // Artık bu 'kisaAdres' 0 ... 9999 arasında bir tam sayı
         yeniDugum->adres = to_string(kisaAdres);
-
-        // 3) BST oluşturma
         IkiliAgacDugumu* kok = 0;
         for (size_t i = 0; i < satir.size(); i++) {
             kok = BSTEkle(kok, satir[i]);
         }
         yeniDugum->kok = kok;
-
-        // 4) ASCII toplama
         if (kok) {
             yeniDugum->asciiToplam = DuzenlenmisAsciiToplam(kok);
         }
-
-        // 5) Bağlı listeye ekle (tek yönlü veya çift yönlü)
         if (!bas) {
             bas = son = yeniDugum;
         }
@@ -103,28 +111,20 @@ void AgacYoneticisi::DosyadanAgacOlustur(const string& dosyaAdi) {
     dosya.close();
 }
 
+// Mevcut düğümü siler ve belleği temizler.
 Dugum* AgacYoneticisi::MevcutDugumuSil(Dugum* mevcutDugum) {
     if (!mevcutDugum) return 0;
-
-    // Önce BST'yi sil
     BSTSil(mevcutDugum->kok);
-
-    // Eğer silinecek düğüm listedeki ilk (bas) ise:
     if (bas == mevcutDugum) {
         bas = bas->sonraki;
-        // Liste boşaldıysa son'u da nullptr yapalım
-        if (!bas) son = 0;
 
+        if (!bas) son = 0;
         delete mevcutDugum;
-        // Yeni mevcut düğüm, eski bas->sonraki idi (yani yeni bas)
         return bas;
     }
-
-    // Silinecek düğüm ilk düğüm değilse, bir önceki düğümü bulup bağlantıları düzenle
     Dugum* onceki = OncekiDugumuBul(mevcutDugum);
     if (onceki) {
         onceki->sonraki = mevcutDugum->sonraki;
-        // Eğer silinen düğüm son ise son'u güncelle
         if (mevcutDugum == son) {
             son = onceki;
         }
@@ -132,24 +132,21 @@ Dugum* AgacYoneticisi::MevcutDugumuSil(Dugum* mevcutDugum) {
 
     Dugum* sonraki = mevcutDugum->sonraki;
     delete mevcutDugum;
-
-    // Silinen düğümün sonrakisi varsa oraya geç,
-    // yoksa bir önceki düğümde kal (onceki).
     return (sonraki ? sonraki : onceki);
 }
 
+// Üzerinde bulunan düğümün bir öncekş düğümünü bulur. Bulamazsa temp en son null olur
 Dugum* AgacYoneticisi::OncekiDugumuBul(Dugum* mevcut) const {
-    // Eğer mevcut düğüm, listenin başı ise önceki yok
     if (!mevcut || mevcut == bas) return 0;
 
     Dugum* temp = bas;
     while (temp && temp->sonraki != mevcut) {
         temp = temp->sonraki;
     }
-    return temp; // Bulamazsa temp en son nullptr olur
+    return temp;
 }
 
-
+// Aynalama gorevini yapar
 void AgacYoneticisi::BSTAynala(IkiliAgacDugumu* kok) {
     if (!kok) return;
     IkiliAgacDugumu* gecici = kok->sol;
@@ -160,6 +157,7 @@ void AgacYoneticisi::BSTAynala(IkiliAgacDugumu* kok) {
     BSTAynala(kok->sag);
 }
 
+// Verilen toplama görevini doğru bir şekilde yapar
 void AgacYoneticisi::DugumAsciiToplamiGuncelle(Dugum* dugum) {
     if (dugum && dugum->kok) {
         dugum->asciiToplam = DuzenlenmisAsciiToplam(dugum->kok);
@@ -169,6 +167,7 @@ void AgacYoneticisi::DugumAsciiToplamiGuncelle(Dugum* dugum) {
     }
 }
 
+// Toplam düğüm sayısını bulur
 int AgacYoneticisi::DugumSayisi() const {
     int sayac = 0;
     Dugum* temp = bas;
@@ -190,6 +189,7 @@ int AgacYoneticisi::DugumIndeksi(Dugum* mevcutDugum) const {
     return -1;
 }
 
+// Düğümlerin bulunduğu bağlı liste şeklini ekrana yazdırır.
 void AgacYoneticisi::AgacYazdir(Dugum* mevcutDugum) const {
     if (!mevcutDugum) {
         cout << "Listede hic dugum kalmadi.\n";
@@ -294,6 +294,7 @@ void AgacYoneticisi::AgacYazdir(Dugum* mevcutDugum) const {
     IkiliAgacCiz(mevcutDugum->kok);
 }
 
+// İkili arama ağacını ekrana çizdirir.
 void AgacYoneticisi::IkiliAgacCiz(IkiliAgacDugumu* kok) const {
     if (!kok) {
         cout << "Ağaç boş.\n";

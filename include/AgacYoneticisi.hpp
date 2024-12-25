@@ -1,3 +1,12 @@
+/*
+* @file..........: AgacYoneticisi.hpp
+* @description...: İkili arama ağaçları üzerinde çeşitli işlemler yaparak düğümleri yönetir.
+* @course........: 2-A
+* @assignment....: 2. Ödev
+* @date..........: 08.12.2024
+* @author........: Melih Can Şengün melih.sengun@ogr.sakarya.edu.tr
+*/
+
 #ifndef AgacYoneticisi_hpp
 #define AgacYoneticisi_hpp
 
@@ -7,8 +16,10 @@
 
 class AgacYoneticisi {
 private:
-    Dugum* bas;  // Tek yönlü listede baş düğüm
-    Dugum* son;  // Ekleme kolaylığı için son düğümü tutuyoruz
+    Dugum* bas; // Ağacın baş düğümünü tutar.
+    Dugum* son; // Ağacın son düğümünü tutar.
+
+    // Kaynak sınıfındaki fonksiyonların imzalarını tutuyoruz.
 
     static int maks(int a, int b);
     IkiliAgacDugumu* BSTEkle(IkiliAgacDugumu* dugum, char ch);
@@ -20,25 +31,16 @@ private:
 public:
     AgacYoneticisi();
     ~AgacYoneticisi();
-
-    void DosyadanAgacOlustur(const std::string& dosyaAdi);
-
-    // Tek yönlü listede düğüm silme
+    void DosyadanAgacOlustur(const string& dosyaAdi);
     Dugum* MevcutDugumuSil(Dugum* mevcutDugum);
-
     void BSTAynala(IkiliAgacDugumu* kok);
     void DugumAsciiToplamiGuncelle(Dugum* dugum);
-
     int DugumSayisi() const;
     int DugumIndeksi(Dugum* mevcutDugum) const;
-
     void AgacYazdir(Dugum* mevcutDugum) const;
     void IkiliAgacCiz(IkiliAgacDugumu* kok) const;
-
     Dugum* BasGetir() const;
     Dugum* SonGetir() const;
-
-    // Geri gitmede kullanmak için yardımcı fonksiyon:
     Dugum* OncekiDugumuBul(Dugum* mevcut) const;
 };
 
